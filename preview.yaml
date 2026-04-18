@@ -1,0 +1,307 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pr-preview-123
+  labels:
+    app: simple-shopping
+    branch: feature-pr-123
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-content
+  namespace: pr-preview-123
+  labels:
+    app: frontend-app-pr123
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Frontend App - E-Commerce Demo</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        h1 { font-size: 1.8em; margin-bottom: 10px; color: #333; }
+        h2 { font-size: 1.3em; margin: 15px 0 10px; color: #444; }
+        .pr-info { background: #e8f4ff; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; font-size: 0.9em; }
+        .products { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+        .product-card { border: 1px solid #ddd; border-radius: 6px; padding: 15px; min-width: 180px; background: #fff; }
+        .product-card h3 { font-size: 1em; margin-bottom: 8px; }
+        .product-card .price { font-weight: bold; color: #e44d26; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .cart-section { border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 20px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .shipping-msg { padding: 8px; border-radius: 4px; margin: 10px 0; font-size: 0.9em; }
+        .shipping-threshold { background: #fff3cd; color: #856404; }
+        .shipping-qualified { background: #d4edda; color: #155724; }
+        .coupon-row { display: flex; gap: 10px; margin: 10px 0; align-items: center; }
+        .coupon-row input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 160px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 4px 0; }
+        .checkout-section { border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.9em; margin-bottom: 4px; color: #555; }
+        .form-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.95em; }
+        .confirmation { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 6px; margin-top: 10px; }
+        .error-msg { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 6px; margin-top: 10px; }
+        .discount-info { background: #fff3cd; color: #856404; padding: 8px; border-radius: 4px; font-size: 0.9em; }
+        @media (max-width: 600px) {
+          body { padding: 10px; }
+          h1 { font-size: 1.4em; }
+          .products { flex-direction: column; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Frontend App - E-Commerce Demo</h1>
+      <div class="pr-info" data-testid="pr-info">Preview: PR #123 - feature/pr-123 Branch</div>
+      <section>
+        <h2>Products</h2>
+        <div class="products">
+          <div class="product-card">
+            <h3>Premium Widget A</h3>
+            <p class="price">$29.99</p>
+            <p style="font-size:0.85em;color:#666;margin:6px 0;">High quality widget</p>
+            <button class="btn btn-primary" data-testid="add-to-cart-1" onclick="addToCart('Premium Widget A', 29.99)">Add to Cart</button>
+          </div>
+          <div class="product-card">
+            <h3>Standard Widget B</h3>
+            <p class="price">$19.99</p>
+            <p style="font-size:0.85em;color:#666;margin:6px 0;">Standard quality widget</p>
+            <button class="btn btn-primary" data-testid="add-to-cart-2" onclick="addToCart('Standard Widget B', 19.99)">Add to Cart</button>
+          </div>
+        </div>
+      </section>
+      <section class="cart-section">
+        <h2>Shopping Cart (<span data-testid="cart-count">0</span> items)</h2>
+        <div id="cart-items-list"></div>
+        <div id="empty-cart-msg" style="color:#999;font-style:italic;padding:10px 0;">Your cart is empty</div>
+        <div data-testid="shipping-message" class="shipping-msg shipping-threshold">Add $50.00 more for free shipping!</div>
+        <div class="coupon-row">
+          <input type="text" data-testid="coupon-input" placeholder="Enter coupon code (e.g. SAVE10)">
+          <button class="btn btn-success" data-testid="apply-coupon" onclick="applyCoupon()">Apply</button>
+        </div>
+        <div data-testid="discount-summary" class="discount-info" style="display:none;margin-bottom:8px;"></div>
+        <div id="order-summary" style="display:none;border-top:1px solid #eee;padding-top:10px;margin-top:10px;">
+          <div class="summary-row">
+            <span>Subtotal:</span>
+            <span data-testid="cart-total">$0.00</span>
+          </div>
+          <div class="summary-row" id="discount-row" style="display:none;color:#28a745;">
+            <span>Discount:</span>
+            <span data-testid="discount-amount">-$10.00</span>
+          </div>
+          <div class="summary-row">
+            <span>Shipping:</span>
+            <span data-testid="shipping-cost">$9.99</span>
+          </div>
+          <div class="summary-row">
+            <span>Tax (10%):</span>
+            <span data-testid="tax-amount">Tax: $0.00</span>
+          </div>
+          <div class="summary-row" style="font-weight:bold;font-size:1.1em;border-top:2px solid #333;margin-top:8px;padding-top:8px;">
+            <span>Order Total:</span>
+            <span data-testid="order-total">$0.00</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" data-testid="checkout-btn" onclick="showCheckout()" style="margin-top:15px;">Proceed to Checkout</button>
+      </section>
+      <section class="checkout-section" id="checkout-section" style="display:none;">
+        <h2>Checkout</h2>
+        <form id="checkout-form" data-testid="checkout-form">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" data-testid="checkout-name" placeholder="John Doe" required>
+          </div>
+          <div class="form-group">
+            <label>Email Address *</label>
+            <input type="email" data-testid="checkout-email" placeholder="john@example.com" required>
+          </div>
+          <div class="form-group">
+            <label>Shipping Address *</label>
+            <input type="text" data-testid="checkout-address" placeholder="123 Main St, City, State" required>
+          </div>
+          <button type="submit" class="btn btn-primary" data-testid="submit-order" style="width:100%;padding:12px;font-size:1em;">Place Order</button>
+        </form>
+        <div data-testid="order-confirmation" class="confirmation" style="display:none;">
+          <strong>Order Confirmed!</strong>
+          <p>Thank you! Your order has been placed successfully.</p>
+        </div>
+        <div data-testid="checkout-error" class="error-msg" style="display:none;">
+          <strong>Checkout Failed</strong>
+          <p>We could not process your order. Please try again.</p>
+        </div>
+      </section>
+      <script>
+        var cart = [];
+        var appliedDiscount = 0;
+        function addToCart(name, price) {
+          cart.push({ name: name, price: price });
+          updateCart();
+        }
+        function removeFromCart(index) {
+          cart.splice(index, 1);
+          updateCart();
+        }
+        function updateCart() {
+          var cartCount = document.querySelector('[data-testid="cart-count"]');
+          var cartItemsList = document.getElementById('cart-items-list');
+          var emptyMsg = document.getElementById('empty-cart-msg');
+          var orderSummary = document.getElementById('order-summary');
+          var shippingMsg = document.querySelector('[data-testid="shipping-message"]');
+          var cartTotal = document.querySelector('[data-testid="cart-total"]');
+          var shippingCost = document.querySelector('[data-testid="shipping-cost"]');
+          var taxAmount = document.querySelector('[data-testid="tax-amount"]');
+          var orderTotal = document.querySelector('[data-testid="order-total"]');
+          cartCount.textContent = cart.length;
+          if (cart.length === 0) {
+            emptyMsg.style.display = 'block';
+            cartItemsList.innerHTML = '';
+            orderSummary.style.display = 'none';
+          } else {
+            emptyMsg.style.display = 'none';
+            orderSummary.style.display = 'block';
+            cartItemsList.innerHTML = cart.map(function(item, i) {
+              return '<div class="cart-item" data-testid="cart-item-' + i + '">' +
+                '<span>' + item.name + '</span>' +
+                '<span class="price">$' + item.price.toFixed(2) + '</span>' +
+                '<button class="btn btn-danger" style="padding:4px 8px;font-size:0.8em;" ' +
+                'data-testid="remove-' + i + '" onclick="removeFromCart(' + i + ')">Remove</button>' +
+                '</div>';
+            }).join('');
+          }
+          var subtotal = cart.reduce(function(s, item) { return s + item.price; }, 0);
+          var discountedSubtotal = Math.max(0, subtotal - appliedDiscount);
+          var shipping = subtotal >= 50 ? 0 : 9.99;
+          var tax = subtotal * 0.10;
+          var total = discountedSubtotal + tax + shipping;
+          cartTotal.textContent = '$' + subtotal.toFixed(2);
+          shippingCost.textContent = shipping === 0 ? 'FREE' : ('$' + shipping.toFixed(2));
+          taxAmount.textContent = 'Tax: $' + tax.toFixed(2);
+          orderTotal.textContent = '$' + total.toFixed(2);
+          if (subtotal >= 50) {
+            shippingMsg.textContent = 'You qualify for free shipping!';
+            shippingMsg.className = 'shipping-msg shipping-qualified';
+          } else {
+            var remaining = (50 - subtotal).toFixed(2);
+            shippingMsg.textContent = 'Add $' + remaining + ' more for free shipping!';
+            shippingMsg.className = 'shipping-msg shipping-threshold';
+          }
+          var discountRow = document.getElementById('discount-row');
+          discountRow.style.display = appliedDiscount > 0 ? 'flex' : 'none';
+        }
+        function applyCoupon() {
+          var couponInput = document.querySelector('[data-testid="coupon-input"]');
+          var discountSummary = document.querySelector('[data-testid="discount-summary"]');
+          var code = couponInput.value.trim().toUpperCase();
+          if (code === 'SAVE10') {
+            appliedDiscount = 10;
+            discountSummary.style.display = 'block';
+            discountSummary.textContent = 'Coupon SAVE10 applied: -$10.00 discount!';
+            discountSummary.setAttribute('data-discount', '10.00');
+          } else if (code === '') {
+            discountSummary.style.display = 'none';
+          } else {
+            appliedDiscount = 0;
+            discountSummary.style.display = 'block';
+            discountSummary.textContent = 'Invalid coupon code: ' + code;
+            discountSummary.setAttribute('data-discount', '0');
+          }
+          updateCart();
+        }
+        function showCheckout() {
+          var checkoutSection = document.getElementById('checkout-section');
+          checkoutSection.style.display = 'block';
+          checkoutSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+          var form = document.getElementById('checkout-form');
+          form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var name = document.querySelector('[data-testid="checkout-name"]').value;
+            var email = document.querySelector('[data-testid="checkout-email"]').value;
+            var address = document.querySelector('[data-testid="checkout-address"]').value;
+            fetch('/api/checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: name, email: email, address: address, cart: cart })
+            })
+            .then(function(response) {
+              if (response.ok) { return response.json(); }
+              throw new Error('HTTP ' + response.status);
+            })
+            .then(function(data) {
+              document.querySelector('[data-testid="order-confirmation"]').style.display = 'block';
+              form.style.display = 'none';
+            })
+            .catch(function(err) {
+              document.querySelector('[data-testid="checkout-error"]').style.display = 'block';
+            });
+          });
+        });
+      </script>
+    </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-app-pr123
+  namespace: pr-preview-123
+  labels:
+    app: frontend-app-pr123
+    branch: feature-pr-123
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-app-pr123
+  template:
+    metadata:
+      labels:
+        app: frontend-app-pr123
+        branch: feature-pr-123
+    spec:
+      containers:
+      - name: frontend
+        image: nginx:1.25-alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html-content
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+      volumes:
+      - name: html-content
+        configMap:
+          name: frontend-content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-app-pr123-svc
+  namespace: pr-preview-123
+  labels:
+    app: frontend-app-pr123
+spec:
+  type: NodePort
+  selector:
+    app: frontend-app-pr123
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30123

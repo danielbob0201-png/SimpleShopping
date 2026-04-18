@@ -1,0 +1,12 @@
+{
+  "name": "simple-shopping",
+  "version": "1.0.0",
+  "description": "E-Commerce Demo Application - Preview Tests",
+  "scripts": {
+    "test": "playwright test",
+    "verify": "playwright test --reporter=list"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.52.0"
+  }
+}
